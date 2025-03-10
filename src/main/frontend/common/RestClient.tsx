@@ -19,6 +19,9 @@ export interface StepInfo {
   id: string;
   type: string;
   stageId: string;
+  rawPauseDurationMillis: number;
+  rawStartTimeMillis: number;
+  rawTotalDurationMillis: number;
   pauseDurationMillis: string;
   startTimeMillis: string;
   totalDurationMillis: string;

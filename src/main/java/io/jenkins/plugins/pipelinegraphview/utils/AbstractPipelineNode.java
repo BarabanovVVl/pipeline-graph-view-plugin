@@ -12,6 +12,9 @@ public class AbstractPipelineNode {
     private String type; // TODO enum
     private String title;
     private String id;
+    private long rawPauseDurationMillis;
+    private long rawTotalDurationMillis;
+    private long rawStartTimeMillis;
     private String pauseDurationMillis;
     private String totalDurationMillis;
     private TimingInfo timingInfo;
@@ -32,6 +35,9 @@ public class AbstractPipelineNode {
         this.title = title;
         this.timingInfo = timingInfo;
         // These values won't change for a given TimingInfo.
+        this.rawPauseDurationMillis = timingInfo.getPauseDurationMillis();
+        this.rawTotalDurationMillis = timingInfo.getTotalDurationMillis();
+        this.rawStartTimeMillis = timingInfo.getStartTimeMillis();
         this.pauseDurationMillis = getUserFriendlyPauseDuration(timingInfo.getPauseDurationMillis());
         this.totalDurationMillis = getUserFriendlyDuration(timingInfo.getTotalDurationMillis());
     }
@@ -57,6 +63,19 @@ public class AbstractPipelineNode {
     public String getStartTimeMillis() {
         // Dynamically generate as it depends of the current time.
         return getUserFriendlyStartTime(timingInfo.getStartTimeMillis());
+    }
+
+    public long getRawStartTimeMillis() {
+        // Dynamically generate as it depends of the current time.
+        return rawStartTimeMillis;
+    }
+
+    public long getRawPauseDurationMillis() {
+        return rawPauseDurationMillis;
+    }
+
+    public long getRawTotalDurationMillis() {
+        return rawTotalDurationMillis;
     }
 
     public String getTotalDurationMillis() {
