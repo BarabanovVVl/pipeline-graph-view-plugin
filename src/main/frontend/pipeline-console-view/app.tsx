@@ -1,22 +1,29 @@
-import React from "react";
-import { lazy, Suspense } from "react";
-import { FunctionComponent } from "react";
+import { lazy } from "react";
 
-import { CircularProgress } from "@mui/material";
+import {
+  I18NProvider,
+  LocaleProvider,
+  ResourceBundleName,
+} from "../common/i18n/index.ts";
+import { FilterProvider } from "./pipeline-console/main/providers/filter-provider.tsx";
+import { LayoutPreferencesProvider } from "./pipeline-console/main/providers/user-preference-provider.tsx";
 
 const PipelineConsole = lazy(
-  () => import("./pipeline-console/main/PipelineConsole"),
+  () => import("./pipeline-console/main/PipelineConsole.tsx"),
 );
 
-const App: FunctionComponent = () => {
+export default function App() {
+  const locale = document.getElementById("console-pipeline-root")!.dataset
+    .userLocale!;
   return (
-    <React.Fragment>
-      <div>
-        <Suspense fallback={<CircularProgress />}>
-          <PipelineConsole />
-        </Suspense>
-      </div>
-    </React.Fragment>
+    <LocaleProvider locale={locale}>
+      <I18NProvider bundles={[ResourceBundleName.messages]}>
+        <FilterProvider>
+          <LayoutPreferencesProvider>
+            <PipelineConsole />
+          </LayoutPreferencesProvider>
+        </FilterProvider>
+      </I18NProvider>
+    </LocaleProvider>
   );
-};
-export default App;
+}

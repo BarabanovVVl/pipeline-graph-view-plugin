@@ -1,5 +1,7 @@
 package io.jenkins.plugins.pipelinegraphview.utils;
 
+import static io.jenkins.plugins.pipelinegraphview.consoleview.PipelineConsoleViewAction.URL_NAME;
+
 import java.util.List;
 import org.jenkinsci.plugins.workflow.pipelinegraphanalysis.TimingInfo;
 
@@ -10,6 +12,7 @@ public class PipelineStage extends AbstractPipelineNode {
     private final PipelineStage nextSibling;
     private boolean sequential;
     private boolean synthetic;
+    private boolean placeholder;
     private String agent;
     private String url;
 
@@ -17,25 +20,26 @@ public class PipelineStage extends AbstractPipelineNode {
             String id,
             String name,
             List<PipelineStage> children,
-            String state,
-            int completePercent,
+            PipelineState state,
             String type,
             String title,
             String seqContainerName,
             PipelineStage nextSibling,
             boolean sequential,
             boolean synthetic,
+            boolean placeholder,
             TimingInfo timingInfo,
             String agent,
             String runUrl) {
-        super(id, name, state, completePercent, type, title, timingInfo);
+        super(id, name, state, type, title, timingInfo);
         this.children = children;
         this.seqContainerName = seqContainerName;
         this.nextSibling = nextSibling;
         this.sequential = sequential;
         this.synthetic = synthetic;
+        this.placeholder = placeholder;
         this.agent = agent;
-        this.url = "/" + runUrl + "pipeline-console?selected-node=" + id;
+        this.url = "/" + runUrl + URL_NAME + "?selected-node=" + id;
     }
 
     public PipelineStage getNextSibling() {
@@ -58,6 +62,10 @@ public class PipelineStage extends AbstractPipelineNode {
 
     public boolean isSynthetic() {
         return synthetic;
+    }
+
+    public boolean isPlaceholder() {
+        return placeholder;
     }
 
     public String getAgent() {

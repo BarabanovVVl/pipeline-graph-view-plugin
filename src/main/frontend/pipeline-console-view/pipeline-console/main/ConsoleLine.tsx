@@ -1,6 +1,6 @@
-import React from "react";
 import { useEffect, useRef } from "react";
-import { makeReactChildren, tokenizeANSIString } from "./Ansi";
+
+import { makeReactChildren, tokenizeANSIString } from "./Ansi.tsx";
 
 export interface ConsoleLineProps {
   lineNumber: string;
@@ -31,6 +31,7 @@ export const ConsoleLine = (props: ConsoleLineProps) => {
 
   return (
     <pre
+      style={{ background: "none", border: "none" }}
       className="console-output-line"
       key={`console-line-pre${props.lineNumber}`}
     >
@@ -46,7 +47,10 @@ export const ConsoleLine = (props: ConsoleLineProps) => {
       >
         <a
           className="console-line-number"
-          href={`?start-byte=${props.startByte}&selected-node=${props.stepId}#log-${props.lineNumber}`} //`}
+          href={`?start-byte=${props.startByte}&selected-node=${props.stepId}#log-${props.lineNumber}`}
+          style={{
+            width: Math.max(9 * String(props.lineNumber).length, 30) + "px",
+          }}
         >
           {props.lineNumber}
         </a>

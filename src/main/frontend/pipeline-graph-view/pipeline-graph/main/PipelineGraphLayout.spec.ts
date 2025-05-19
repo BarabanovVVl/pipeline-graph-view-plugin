@@ -1,5 +1,7 @@
-import { NodeInfo, Result, StageInfo, StageType } from "./PipelineGraphModel";
-import { createNodeColumns } from "./PipelineGraphLayout";
+import { describe } from "vitest";
+
+import { createNodeColumns } from "./PipelineGraphLayout.ts";
+import { Result, StageInfo, StageType } from "./PipelineGraphModel.tsx";
 
 describe("PipelineGraphLayout", () => {
   describe("createNodeColumns", () => {
@@ -11,9 +13,9 @@ describe("PipelineGraphLayout", () => {
       id: 0,
       type: "STAGE",
       children: [],
-      pauseDurationMillis: "",
-      startTimeMillis: "",
-      totalDurationMillis: "",
+      pauseDurationMillis: 0,
+      startTimeMillis: 0,
+      totalDurationMillis: 0,
       agent: "built-in",
       url: "?selected-node=0",
     };

@@ -1,15 +1,18 @@
-/** * @jest-environment jsdom */
+/** * @vitest-environment jsdom */
 
-import "@testing-library/jest-dom";
-import React from "react";
-import { ConsoleLogCard } from "./ConsoleLogCard";
-import type { ConsoleLogCardProps } from "./ConsoleLogCard";
-import { ConsoleLogStreamProps } from "./ConsoleLogStream";
-import { Result, StepInfo, StepLogBufferInfo } from "./PipelineConsoleModel";
 import { render } from "@testing-library/react";
+import { vi } from "vitest";
 
-jest.mock("./ConsoleLogStream", () => {
-  return jest.fn((props: ConsoleLogStreamProps) => {
+import ConsoleLogCard, { ConsoleLogCardProps } from "./ConsoleLogCard.tsx";
+import { ConsoleLogStreamProps } from "./ConsoleLogStream.tsx";
+import {
+  Result,
+  StepInfo,
+  StepLogBufferInfo,
+} from "./PipelineConsoleModel.tsx";
+
+vi.mock("./ConsoleLogStream.tsx", () => {
+  return vi.fn((props: ConsoleLogStreamProps) => {
     return (
       <div>
         <div>SimpleConsoleLogStream...</div>
@@ -46,13 +49,12 @@ describe("ConsoleLogCard", () => {
     step: baseStep,
     stepBuffer: baseBuffer,
     isExpanded: false,
-    handleStepToggle: () => {
-      console.log("handleStepToggle triggered");
+    onStepToggle: () => {
+      console.log("onStepToggle triggered");
     },
-    handleMoreConsoleClick: () => {
-      console.log("handleMoreConsoleClick triggered");
+    onMoreConsoleClick: () => {
+      console.log("onMoreConsoleClick triggered");
     },
-    scrollParentId: "test-parent",
   } as ConsoleLogCardProps;
 
   it("renders step header only when not expanded", async () => {
@@ -68,19 +70,17 @@ describe("ConsoleLogCard", () => {
     expect(findByText(/Hello, world!/));
   });
 
-  it("calls handleMoreConsoleClick on load was card isExpanded set", async () => {
-    console.log = jest.fn();
-    render(<ConsoleLogCard {...DefaultTestProps} isExpanded={true} />);
-    expect(console.log).toHaveBeenCalledWith(
-      "handleMoreConsoleClick triggered",
-    );
+  it("calls onMoreConsoleClick on load was card isExpanded set", async () => {
+    console.log = vi.fn();
+    render(<ConsoleLogCard {...DefaultTestProps} isExpanded />);
+    expect(console.log).toHaveBeenCalledWith("onMoreConsoleClick triggered");
   });
 
-  it("does not call handleMoreConsoleClick on load was card isExpanded set", async () => {
-    console.log = jest.fn();
+  it("does not call onMoreConsoleClick on load was card isExpanded set", async () => {
+    console.log = vi.fn();
     render(<ConsoleLogCard {...DefaultTestProps} />);
     expect(console.log).not.toHaveBeenCalledWith(
-      "handleMoreConsoleClick triggered",
+      "onMoreConsoleClick triggered",
     );
   });
 });

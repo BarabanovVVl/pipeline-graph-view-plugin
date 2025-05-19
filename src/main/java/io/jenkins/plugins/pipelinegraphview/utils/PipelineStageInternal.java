@@ -1,17 +1,16 @@
 package io.jenkins.plugins.pipelinegraphview.utils;
 
+import io.jenkins.plugins.pipelinegraphview.Messages;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import org.jenkinsci.plugins.workflow.pipelinegraphanalysis.TimingInfo;
 
-public class PipelineStageInternal {
+class PipelineStageInternal {
 
     private String name;
     private List<String> parents;
-    private String state; // TODO enum
-    private int completePercent; // TODO int is fine?
-    private String type; // TODO enum
+    private PipelineState state;
+    private FlowNodeWrapper.NodeType type;
     private String title;
     private String id;
     private String seqContainerName;
@@ -25,9 +24,8 @@ public class PipelineStageInternal {
             String id,
             String name,
             List<String> parents,
-            String state,
-            int completePercent,
-            String type,
+            PipelineState state,
+            FlowNodeWrapper.NodeType type,
             String title,
             boolean synthetic,
             TimingInfo times,
@@ -35,8 +33,7 @@ public class PipelineStageInternal {
         this.id = id;
         this.name = name;
         this.parents = parents;
-        this.state = state.toLowerCase(Locale.ROOT);
-        this.completePercent = completePercent;
+        this.state = state;
         this.type = type;
         this.title = title;
         this.synthetic = synthetic;
@@ -56,16 +53,8 @@ public class PipelineStageInternal {
         this.sequential = sequential;
     }
 
-    public void setState(String state) {
+    public void setState(PipelineState state) {
         this.state = state;
-    }
-
-    public void setCompletePercent(int completePercent) {
-        this.completePercent = completePercent;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public void setTitle(String title) {
@@ -100,16 +89,8 @@ public class PipelineStageInternal {
         return parents;
     }
 
-    public String getState() {
+    public PipelineState getState() {
         return state;
-    }
-
-    public int getCompletePercent() {
-        return completePercent;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public String getTitle() {
@@ -138,13 +119,13 @@ public class PipelineStageInternal {
                 name,
                 children,
                 state,
-                completePercent,
-                type,
+                type.name(),
                 title,
                 seqContainerName,
                 nextSibling != null ? nextSibling.toPipelineStage(Collections.emptyList(), runUrl) : null,
                 sequential,
                 synthetic,
+                synthetic && name.equals(Messages.FlowNodeWrapper_noStage()),
                 timingInfo,
                 agent,
                 runUrl);

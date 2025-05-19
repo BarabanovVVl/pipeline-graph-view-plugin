@@ -1,48 +1,42 @@
-import React, { useState } from "react";
-import { RunInfo } from "./MultiPipelineGraphModel";
+import "./single-run.scss";
+
+import StatusIcon from "../../../common/components/status-icon.tsx";
+import useRunPoller from "../../../common/tree-api.ts";
+import { time, Total } from "../../../common/utils/timings.tsx";
+import { PipelineGraph } from "../../../pipeline-graph-view/pipeline-graph/main/PipelineGraph.tsx";
 import {
-  PipelineGraph,
-  StageInfo,
-} from "../../../pipeline-graph-view/pipeline-graph/main";
+  defaultLayout,
+  LayoutInfo,
+} from "../../../pipeline-graph-view/pipeline-graph/main/PipelineGraphModel.tsx";
+import { RunInfo } from "./MultiPipelineGraphModel.ts";
 
-interface Props {
-  run: RunInfo;
-}
+export default function SingleRun({ run, currentJobPath }: SingleRunProps) {
+  const { run: runInfo } = useRunPoller({
+    currentRunPath: currentJobPath + run.id + "/",
+  });
 
-export const SingleRun: (data: Props) => JSX.Element = ({ run }) => {
-  const [stages, setStages] = useState<Array<StageInfo>>([]);
-  let path = `tree?runId=${run.id}`;
-
-  const url = new URL(window.location.href);
-
-  const onJobView = !url.pathname.endsWith("multi-pipeline-graph/");
-  if (onJobView) {
-    path = `multi-pipeline-graph/${path}`;
-  }
-
-  let singleRunPage = `../${run.id}/pipeline-graph/`;
-  if (onJobView) {
-    singleRunPage = `${run.id}/pipeline-graph/`;
-  }
+  const layout: LayoutInfo = {
+    ...defaultLayout,
+    nodeSpacingH: 45,
+  };
 
   return (
-    <tr>
-      <td>
-        <a
-          href={singleRunPage}
-          className="jenkins-table__link pgw-user-specified-text"
-        >
+    <div className="pgv-single-run">
+      <div>
+        <a href={currentJobPath + run.id} className="pgw-user-specified-text">
+          <StatusIcon status={run.result} />
           {run.displayName}
+          <span>
+            {time(run.timestamp)} - <Total ms={run.duration} />
+          </span>
         </a>
-      </td>
-      <td>
-        <PipelineGraph
-          stages={stages}
-          setStages={setStages}
-          path={path}
-          collapsed={true}
-        />
-      </td>
-    </tr>
+      </div>
+      <PipelineGraph stages={runInfo?.stages || []} layout={layout} collapsed />
+    </div>
   );
-};
+}
+
+interface SingleRunProps {
+  run: RunInfo;
+  currentJobPath: string;
+}

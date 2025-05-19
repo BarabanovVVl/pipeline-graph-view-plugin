@@ -1,14 +1,12 @@
-import React from "react";
-import ReactDOMClient from "react-dom/client";
-import App from "./app";
+import { createRoot } from "react-dom/client";
 
-import { resetEnvironment } from "../common/reset-environment";
+import App from "./app.tsx";
 
-resetEnvironment();
 const rootElement = document.getElementById("multiple-pipeline-root");
-if (!rootElement)
+if (!rootElement) {
   throw new Error("Failed to find the 'multiple-pipeline-root' element");
-const root = ReactDOMClient.createRoot(rootElement);
+}
+const root = createRoot(rootElement);
 
 // Render App
 root.render(<App />);

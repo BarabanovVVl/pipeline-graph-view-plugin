@@ -1,20 +1,8 @@
-@import "variables";
-@import "PipelineGraphWidget";
+@use "../../../common/styles/variables";
+@use "PipelineGraphWidget";
 
 .PWGx-PipelineGraph-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  overflow-x: auto;
-
-  * {
-    box-sizing: border-box;
-  }
-
-  .PWGx-PipelineGraph {
-    --graph-connector-grey: #{$graph-connector-grey};
-
-    margin-left: auto;
-    margin-right: auto;
-  }
+  padding: var(--section-padding);
 }

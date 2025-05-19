@@ -1,5 +1,7 @@
 package io.jenkins.plugins.pipelinegraphview;
 
+import static io.jenkins.plugins.pipelinegraphview.consoleview.PipelineConsoleViewAction.URL_NAME;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Job;
@@ -26,7 +28,7 @@ public class PipelineGraphDisplayURLProvider extends DisplayURLProvider {
     @NonNull
     public String getRunURL(Run<?, ?> run) {
         if (run instanceof WorkflowRun) {
-            return DisplayURLProvider.getDefault().getRunURL(run) + "pipeline-graph";
+            return DisplayURLProvider.getDefault().getRunURL(run) + URL_NAME;
         }
         return DisplayURLProvider.getDefault().getRunURL(run);
     }
@@ -48,7 +50,6 @@ public class PipelineGraphDisplayURLProvider extends DisplayURLProvider {
 
     @Override
     public String getJobURL(Job<?, ?> job) {
-        // TODO: Could redirect this to MultiPipelineGraphViewAction
         return DisplayURLProvider.getDefault().getJobURL(job);
     }
 }

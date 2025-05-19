@@ -1,18 +1,16 @@
-import * as React from "react";
+import { CSSProperties } from "react";
 
-import { nodeStrokeWidth } from "../support/StatusIcons";
-import { TruncatingLabel } from "../support/TruncatingLabel";
-import { NodeLabelInfo, LayoutInfo, StageInfo } from "../PipelineGraphModel";
-import { sequentialStagesLabelOffset } from "../PipelineGraphLayout";
-
-import { TooltipLabel } from "./convertLabelToTooltip";
+import { sequentialStagesLabelOffset } from "../PipelineGraphLayout.ts";
+import { LayoutInfo, NodeLabelInfo } from "../PipelineGraphModel.tsx";
+import { TooltipLabel } from "./convertLabelToTooltip.tsx";
+import { nodeStrokeWidth } from "./StatusIcons.tsx";
+import { TruncatingLabel } from "./TruncatingLabel.tsx";
 
 interface RenderBigLabelProps {
   details: NodeLabelInfo;
   layout: LayoutInfo;
   measuredHeight: number;
-  selectedStage?: StageInfo;
-  isStageSelected: (stage?: StageInfo) => boolean;
+  isSelected: boolean;
 }
 
 /**
@@ -22,32 +20,8 @@ export function BigLabel({
   details,
   layout,
   measuredHeight,
-  isStageSelected,
-  selectedStage,
+  isSelected,
 }: RenderBigLabelProps) {
-  /**
-   * Is any child of this stage currently selected?
-   */
-  function isStageChildSelected(stage?: StageInfo, selectedStage?: StageInfo) {
-    if (stage) {
-      const { children } = stage;
-
-      if (children && selectedStage) {
-        for (const childStage of children) {
-          let currentStage: StageInfo | undefined = childStage;
-
-          while (currentStage) {
-            if (currentStage.id === selectedStage.id) {
-              return true;
-            }
-            currentStage = currentStage.nextSibling;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   const { nodeSpacingH, labelOffsetV, connectorStrokeWidth, ypStart } = layout;
 
   const labelWidth = nodeSpacingH - connectorStrokeWidth * 2;
@@ -55,7 +29,7 @@ export function BigLabel({
   const labelOffsetH = Math.floor(labelWidth / -2);
 
   // These are about layout more than appearance, so they should probably remain inline
-  const bigLabelStyle = {
+  const bigLabelStyle: CSSProperties = {
     position: "absolute",
     width: labelWidth,
     maxHeight: labelHeight + "px",
@@ -67,21 +41,24 @@ export function BigLabel({
   const bottom = measuredHeight - details.y + labelOffsetV;
 
   // These are about layout more than appearance, so they're inline
-  const style = {
+  const style: CSSProperties = {
     ...bigLabelStyle,
     bottom: bottom + "px",
     left: x + "px",
   };
 
   const classNames = ["PWGx-pipeline-big-label"];
-  if (
-    isStageSelected(details.stage) ||
-    isStageChildSelected(details.stage, selectedStage)
-  ) {
-    classNames.push("selected");
+  if (isSelected) {
+    classNames.push("PWGx-pipeline-big-label--selected");
   }
   if (details.stage && details.stage.synthetic) {
     classNames.push("pgv-graph-node--synthetic");
+  }
+  if (details.stage?.skeleton) {
+    classNames.push("pgv-graph-node--skeleton");
+  }
+  if (details.node.id < 0) {
+    classNames.push("pgv-graph-node--skeleton");
   }
 
   return (
@@ -98,17 +75,13 @@ export function BigLabel({
 interface SmallLabelProps {
   details: NodeLabelInfo;
   layout: LayoutInfo;
-  isStageSelected: (stage?: StageInfo) => boolean;
+  isSelected?: boolean;
 }
 
 /**
  * Generate the Component for a small label
  */
-export function SmallLabel({
-  details,
-  layout,
-  isStageSelected,
-}: SmallLabelProps) {
+export function SmallLabel({ details, layout, isSelected }: SmallLabelProps) {
   const {
     nodeSpacingH,
     nodeSpacingV,
@@ -130,8 +103,8 @@ export function SmallLabel({
   const top = details.y + smallLabelOffsetV;
 
   // These are about layout more than appearance, so they're inline
-  const style = {
-    top: top,
+  const style: CSSProperties = {
+    top,
     left: x,
     position: "absolute",
     width: smallLabelWidth,
@@ -140,8 +113,8 @@ export function SmallLabel({
   };
 
   const classNames = ["PWGx-pipeline-small-label"];
-  if (details.stage && isStageSelected(details.stage)) {
-    classNames.push("selected");
+  if (details.stage && isSelected) {
+    classNames.push("PWGx-pipeline-small-label--selected");
   }
 
   return (
@@ -184,11 +157,11 @@ export function SequentialContainerLabel({
     maxWidth: sequentialStagesLabelOffset,
     overflow: "hidden",
     textOverflow: "ellipsis",
-    background: "var(--background, white)",
-    padding: "0 3px",
+    background: "var(--card-background)",
+    fontSize: "0.8125rem",
+    fontWeight: "var(--font-bold-weight)",
+    padding: "0 5px",
     whiteSpace: "nowrap" as const,
-    outline: "1px solid var(--graph-connector-grey, gray)",
-    borderRadius: "3px",
   };
 
   return (

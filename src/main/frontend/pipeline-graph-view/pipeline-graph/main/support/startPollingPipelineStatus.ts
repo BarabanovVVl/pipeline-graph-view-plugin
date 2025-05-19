@@ -1,16 +1,13 @@
-import { StageInfo } from "../PipelineGraphModel";
-
-interface ApiResult {
-  complete: boolean;
-  stages: Array<StageInfo>;
-}
-
+import {
+  getRunStatusFromPath,
+  RunStatus,
+} from "../../../../common/RestClient.tsx";
 /**
  * Starts polling the server to retrieve pipeline status.
  * Will only stop once the run is finished.
  */
-export default function startPollingPipelineStatus(
-  onFetchSuccess: (data: ApiResult) => void,
+export default async function startPollingPipelineStatus(
+  onFetchSuccess: (data: RunStatus) => void,
   onFetchError: (err: Error) => void,
   onPipelineComplete: () => void,
   path: string,
@@ -20,10 +17,9 @@ export default function startPollingPipelineStatus(
 
   async function fetchPipelineData() {
     try {
-      const res = await fetch(path);
-      const result = await res.json();
-      onFetchSuccess(result.data);
-      isComplete = result.data.complete;
+      const result = await getRunStatusFromPath(path)!;
+      onFetchSuccess({ stages: result!.stages, complete: result!.complete });
+      isComplete = result!.complete;
     } catch (err) {
       // TODO: implement exponential backoff of the timeout interval
       onFetchError(err);

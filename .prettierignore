@@ -1,6 +1,8 @@
-/*
-!/src
 /src/*
-!/src/main
+!/src/main/
 /src/main/*
-!/src/main/frontend
+!/src/main/frontend/
+
+/.mvn/*
+/Jenkinsfile
+/pom.xml

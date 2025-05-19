@@ -1,12 +1,12 @@
-import * as React from "react";
+import { Component } from "react";
 
-import { nodeStrokeWidth } from "../support/StatusIcons";
+import { sequentialStagesLabelOffset } from "../PipelineGraphLayout.ts";
 import {
   CompositeConnection,
   LayoutInfo,
   NodeInfo,
-} from "../PipelineGraphModel";
-import { sequentialStagesLabelOffset } from "../PipelineGraphLayout";
+} from "../PipelineGraphModel.tsx";
+import { nodeStrokeWidth } from "../support/StatusIcons.tsx";
 
 type SVGChildren = Array<any>; // Fixme: Maybe refine this? Not sure what should go here, we have working code I can't make typecheck
 
@@ -20,8 +20,8 @@ interface Props {
   layout: LayoutInfo;
 }
 
-export class GraphConnections extends React.Component {
-  props!: Props;
+export class GraphConnections extends Component {
+  declare props: Props;
 
   /**
    * Generate SVG for a composite connection, which may be to/from many nodes.

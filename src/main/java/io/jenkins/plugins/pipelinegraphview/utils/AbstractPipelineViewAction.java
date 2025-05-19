@@ -1,5 +1,7 @@
 package io.jenkins.plugins.pipelinegraphview.utils;
 
+import static io.jenkins.plugins.pipelinegraphview.consoleview.PipelineConsoleViewAction.URL_NAME;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.model.Action;
@@ -86,8 +88,17 @@ public abstract class AbstractPipelineViewAction implements Action, IconSpec {
         return null;
     }
 
+    public String getBuildUrl() {
+        return run.getUrl();
+    }
+
     public String getPreviousBuildNumber() {
         return getBuildNumber(run.getPreviousBuild());
+    }
+
+    public String getPreviousBuildUrl() {
+        WorkflowRun previousBuild = run.getPreviousBuild();
+        return previousBuild == null ? null : previousBuild.getUrl();
     }
 
     public String getNextBuildNumber() {
@@ -135,7 +146,7 @@ public abstract class AbstractPipelineViewAction implements Action, IconSpec {
                 "url",
                 appendTrailingSlashIfRequired(req.getContextPath())
                         + run.getUrl().replace("/" + run.getNumber() + "/", "/" + estimatedNextBuildNumber + "/")
-                        + "pipeline-graph/");
+                        + URL_NAME);
 
         result.put("success", true);
         return HttpResponses.okJSON(result);
@@ -156,6 +167,6 @@ public abstract class AbstractPipelineViewAction implements Action, IconSpec {
 
     @Override
     public String getIconClassName() {
-        return "symbol-git-network-outline plugin-ionicons-api";
+        return null;
     }
 }

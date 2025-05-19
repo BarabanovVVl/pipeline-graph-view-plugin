@@ -1,16 +1,28 @@
 package io.jenkins.plugins.pipelinegraphview.consoleview;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.console.AnnotatedLargeText;
 import hudson.util.HttpResponses;
+import io.jenkins.plugins.pipelinegraphview.PipelineGraphViewConfiguration;
+import io.jenkins.plugins.pipelinegraphview.cards.RunDetailsCard;
+import io.jenkins.plugins.pipelinegraphview.cards.RunDetailsItem;
+import io.jenkins.plugins.pipelinegraphview.cards.items.ArtifactRunDetailsItem;
+import io.jenkins.plugins.pipelinegraphview.cards.items.ChangesRunDetailsItem;
+import io.jenkins.plugins.pipelinegraphview.cards.items.SCMRunDetailsItems;
+import io.jenkins.plugins.pipelinegraphview.cards.items.TestResultRunDetailsItem;
+import io.jenkins.plugins.pipelinegraphview.cards.items.TimingRunDetailsItems;
+import io.jenkins.plugins.pipelinegraphview.cards.items.UpstreamCauseRunDetailsItem;
+import io.jenkins.plugins.pipelinegraphview.cards.items.UserIdCauseRunDetailsItem;
 import io.jenkins.plugins.pipelinegraphview.utils.AbstractPipelineViewAction;
 import io.jenkins.plugins.pipelinegraphview.utils.PipelineNodeUtil;
 import io.jenkins.plugins.pipelinegraphview.utils.PipelineStep;
 import io.jenkins.plugins.pipelinegraphview.utils.PipelineStepApi;
 import io.jenkins.plugins.pipelinegraphview.utils.PipelineStepList;
 import java.io.IOException;
-import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -19,15 +31,13 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.WebMethod;
-import org.kohsuke.stapler.framework.io.CharSpool;
-import org.kohsuke.stapler.framework.io.LineEndNormalizingWriter;
 import org.kohsuke.stapler.verb.GET;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
     public static final long LOG_THRESHOLD = 150 * 1024; // 150KB
-    public static final String URL_NAME = "pipeline-console";
+    public static final String URL_NAME = "pipeline-overview";
 
     private static final Logger logger = LoggerFactory.getLogger(PipelineConsoleViewAction.class);
     private final WorkflowRun target;
@@ -43,7 +53,7 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
 
     @Override
     public String getDisplayName() {
-        return "Pipeline Console";
+        return "Pipeline Overview";
     }
 
     @Override
@@ -53,7 +63,7 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
 
     @Override
     public String getIconClassName() {
-        return "symbol-terminal-outline plugin-ionicons-api";
+        return "symbol-git-network-outline plugin-ionicons-api";
     }
 
     public String getDurationString() {
@@ -62,6 +72,10 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
 
     public String getStartTimeString() {
         return run.getTimestampString();
+    }
+
+    public String getUrl() {
+        return target.getUrl();
     }
 
     // Legacy - leave in case we want to update a sub section of steps (e.g. if a stage is still
@@ -78,11 +92,11 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
     }
 
     private JSONObject getSteps(String nodeId) throws IOException {
-        logger.debug("getSteps was passed nodeId '" + nodeId + "'.");
+        logger.debug("getSteps was passed nodeId '{}'.", nodeId);
         PipelineStepList steps = stepApi.getSteps(nodeId);
         String stepsJson = MAPPER.writeValueAsString(steps);
         if (logger.isDebugEnabled()) {
-            logger.debug("Steps: '" + stepsJson + "'.");
+            logger.debug("Steps for {}: '{}'.", nodeId, stepsJson);
         }
         return JSONObject.fromObject(stepsJson);
     }
@@ -101,51 +115,67 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
         PipelineStepList steps = stepApi.getAllSteps();
         String stepsJson = MAPPER.writeValueAsString(steps);
         if (logger.isDebugEnabled()) {
-            logger.debug("Steps: '" + stepsJson + "'.");
+            logger.debug("Steps: '{}'.", stepsJson);
         }
         return JSONObject.fromObject(stepsJson);
     }
 
     @WebMethod(name = "log")
-    public HttpResponse getConsoleText(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @SuppressFBWarnings(
+            value = "RV_RETURN_VALUE_IGNORED",
+            justification =
+                    "Doesn't seem to matter in practice, docs aren't clear on how to handle and most places ignore it")
+    public void getConsoleText(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
         String nodeId = req.getParameter("nodeId");
+
+        rsp.setContentType("text/plain");
+
         if (nodeId == null) {
             logger.error("'consoleText' was not passed 'nodeId'.");
-            return HttpResponses.errorJSON("Error getting console text");
+            rsp.getWriter().write("Error getting console text\n");
+            return;
         }
-        logger.debug("getConsoleText was passed node id '" + nodeId + "'.");
+        logger.debug("getConsoleText was passed node id '{}'.", nodeId);
         // This will be a step, so return its log output.
         AnnotatedLargeText<? extends FlowNode> logText = getLogForNode(nodeId);
-
-        long count = 0;
-        PipelineStepList steps = stepApi.getSteps(nodeId);
-        try (CharSpool spool = new CharSpool()) {
-
-            for (PipelineStep step : steps.getSteps()) {
-                AnnotatedLargeText<? extends FlowNode> logForNode = getLogForNode(String.valueOf(step.getId()));
-                if (logForNode != null) {
-                    count += logForNode.writeLogTo(0, spool);
-                }
-            }
-
-            if (count > 0) {
-                rsp.setContentType("text/plain;charset=UTF-8");
-                try (Writer writer = rsp.getWriter()) {
-                    spool.flush();
-                    spool.writeTo(new LineEndNormalizingWriter(writer));
-                }
-            }
-        }
-
         if (logText != null) {
-            return HttpResponses.text(PipelineNodeUtil.convertLogToString(logText));
+            logText.writeLogTo(0L, rsp.getOutputStream());
+            return;
         }
-        return HttpResponses.text("No logs found");
+
+        // Potentially a stage, so get the log text for the stage.
+        boolean foundLogs = false;
+        PipelineStepList steps = stepApi.getSteps(nodeId);
+        for (PipelineStep step : steps.getSteps()) {
+            logText = getLogForNode(step.getId());
+            if (logText != null) {
+                foundLogs = true;
+                logText.writeLogTo(0L, rsp.getOutputStream());
+            }
+        }
+        if (!foundLogs) {
+            rsp.getWriter().write("No logs found\n");
+        }
+    }
+
+    @GET
+    @WebMethod(name = "consoleBuildOutput")
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @SuppressFBWarnings(
+            value = "RV_RETURN_VALUE_IGNORED",
+            justification =
+                    "Doesn't seem to matter in practice, docs aren't clear on how to handle and most places ignore it")
+    public void getBuildConsole(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
+        run.getLogText().writeHtmlTo(0L, rsp.getWriter());
     }
 
     /*
      * The default behavior of this functions differs from 'getConsoleOutput' in that it will use LOG_THRESHOLD from the end of the string.
      * Note: if 'startByte' is negative and falls outside of the console text then we will start from byte 0.
+     *
+     * FIXME: This is not performant and needs to be re-written to not buffer in memory. Avoiding JSON for log text.
+     *
      * Example:
      * {
      *   "startByte": 0,
@@ -161,7 +191,7 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
             logger.error("'consoleJson' was not passed 'nodeId'.");
             return HttpResponses.errorJSON("Error getting console json");
         }
-        logger.debug("getConsoleOutput was passed node id '" + nodeId + "'.");
+        logger.debug("getConsoleOutput was passed node id '{}'.", nodeId);
         // This will be a step, so return it's log output.
         // startByte to start getting data from. If negative will startByte from end of string with
         // LOG_THRESHOLD.
@@ -190,19 +220,19 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
             }
             // if startByte is negative make sure we don't try and get a byte before 0.
             if (requestStartByte < 0L) {
-                logger.debug("consoleJson - requested negative startByte '" + requestStartByte + "'.");
+                logger.debug("consoleJson - requested negative startByte '{}'.", requestStartByte);
                 startByte = textLength + requestStartByte;
                 if (startByte < 0L) {
-                    logger.debug("consoleJson - requested negative startByte '"
-                            + requestStartByte
-                            + "' out of bounds, starting at 0.");
+                    logger.debug(
+                            "consoleJson - requested negative startByte '{}' out of bounds, starting at 0.",
+                            requestStartByte);
                     startByte = 0L;
                 }
             } else {
                 startByte = requestStartByte;
             }
-            logger.debug("Returning '" + (textLength - startByte) + "' bytes from 'getConsoleOutput'.");
-            text = PipelineNodeUtil.convertLogToString(logText, startByte, true);
+            logger.debug("Returning '{}' bytes from 'getConsoleOutput'.", textLength - startByte);
+            text = PipelineNodeUtil.convertLogToString(logText, startByte);
             endByte = textLength;
         }
         // If has an exception, return the exception text (inc. stacktrace).
@@ -250,11 +280,36 @@ public class PipelineConsoleViewAction extends AbstractPipelineViewAction {
 
     private static long parseIntWithDefault(String s, long defaultValue) {
         try {
-            logger.debug("Parsing user provided value of '" + s + "'");
+            logger.debug("Parsing user provided value of '{}'", s);
             return Long.parseLong(s);
         } catch (NumberFormatException e) {
-            logger.debug("Using default value of '" + defaultValue + "'");
+            logger.debug("Using default value of '{}'", defaultValue);
             return defaultValue;
         }
+    }
+
+    @SuppressWarnings("unused")
+    public RunDetailsCard getRunDetailsCard() {
+
+        List<RunDetailsItem> runDetailsItems = new ArrayList<>(SCMRunDetailsItems.get(run));
+
+        if (!runDetailsItems.isEmpty()) {
+            runDetailsItems.add(RunDetailsItem.SEPARATOR);
+        }
+
+        UpstreamCauseRunDetailsItem.get(run).ifPresent(runDetailsItems::add);
+        UserIdCauseRunDetailsItem.get(run).ifPresent(runDetailsItems::add);
+
+        runDetailsItems.addAll(TimingRunDetailsItems.get(run));
+
+        ChangesRunDetailsItem.get(run).ifPresent(runDetailsItems::add);
+        TestResultRunDetailsItem.get(run).ifPresent(runDetailsItems::add);
+        ArtifactRunDetailsItem.get(run).ifPresent(runDetailsItems::add);
+
+        return new RunDetailsCard(runDetailsItems);
+    }
+
+    public boolean isShowGraphOnBuildPage() {
+        return PipelineGraphViewConfiguration.get().isShowGraphOnBuildPage();
     }
 }

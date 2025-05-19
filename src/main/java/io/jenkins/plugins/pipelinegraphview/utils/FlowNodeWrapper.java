@@ -5,6 +5,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.model.Action;
 import hudson.model.Result;
+import io.jenkins.plugins.pipelinegraphview.Messages;
 import io.jenkins.plugins.pipelinegraphview.treescanner.PipelineNodeGraphAdapter;
 import io.jenkins.plugins.pipelinegraphview.utils.BlueRun.BlueRunResult;
 import io.jenkins.plugins.pipelinegraphview.utils.BlueRun.BlueRunState;
@@ -17,7 +18,6 @@ import java.util.List;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
-import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -130,14 +130,11 @@ public class FlowNodeWrapper {
     }
 
     public @NonNull String getDisplayName() {
-        // Make 'PARALLEL_BLOCK' types have the display name as SytheticNodes used to.
-        if (type == NodeType.PARALLEL_BLOCK) {
-            return "Parallel";
-        }
-        if (type == NodeType.PIPELINE_START) {
-            return "Unhandled Exception";
-        }
-        return displayName;
+        return switch (type) {
+            case PARALLEL_BLOCK -> Messages.FlowNodeWrapper_parallel();
+            case PIPELINE_START -> Messages.FlowNodeWrapper_noStage();
+            default -> displayName;
+        };
     }
 
     public @CheckForNull String getLabelDisplayName() {
@@ -149,7 +146,7 @@ public class FlowNodeWrapper {
     }
 
     private static NodeType getNodeType(FlowNode node) {
-        if (node instanceof AtomNode) {
+        if (PipelineNodeUtil.isStep(node)) {
             return NodeType.STEP;
         } else if (PipelineNodeUtil.isStage(node)) {
             return NodeType.STAGE;
@@ -376,7 +373,7 @@ public class FlowNodeWrapper {
     }
 
     public boolean isSynthetic() {
-        return PipelineNodeUtil.isSyntheticStage(node);
+        return PipelineNodeUtil.isSyntheticStage(node) || getNodeType(node) == NodeType.PIPELINE_START;
     }
 
     public boolean isUnhandledException() {

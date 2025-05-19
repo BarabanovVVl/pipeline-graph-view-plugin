@@ -1,11 +1,12 @@
 import {
   Result,
   StageInfo,
-} from "../pipeline-graph-view/pipeline-graph/main/PipelineGraphModel";
+} from "../pipeline-graph-view/pipeline-graph/main/PipelineGraphModel.tsx";
+import { ResourceBundle } from "./i18n/index.ts";
 
 export interface RunStatus {
   stages: StageInfo[];
-  isComplete: boolean;
+  complete: boolean;
 }
 
 /**
@@ -41,21 +42,15 @@ export interface ConsoleLogData {
   endByte: number;
 }
 
-export async function getRunStatus(): Promise<RunStatus | null> {
+export async function getRunStatusFromPath(
+  url: string,
+): Promise<RunStatus | null> {
   try {
-    let response = await fetch("tree");
-    if (!response.ok) throw response.statusText;
-    let json = await response.json();
-    if (json.data.hasOwnProperty("complete")) {
-      // The API returned 'complete' but we expect 'isComplete'.
-      if ("complete" in json.data) {
-        json.data["isComplete"] = json.data["complete"];
-        delete json.data["complete"];
-      }
-      if (!("isComplete" in json.data)) {
-        console.error("Did not get 'complete' status from API.");
-      }
+    const response = await fetch(url + "pipeline-overview/tree");
+    if (!response.ok) {
+      throw response.statusText;
     }
+    const json = await response.json();
     return json.data;
   } catch (e) {
     console.error(`Caught error getting tree: '${e}'`);
@@ -65,10 +60,10 @@ export async function getRunStatus(): Promise<RunStatus | null> {
 
 export async function getRunSteps(): Promise<StepInfo[] | null> {
   try {
-    let response = await fetch("allSteps");
+    const response = await fetch("allSteps");
     if (!response.ok) throw response.statusText;
-    let json = await response.json();
-    return json.data;
+    const json = await response.json();
+    return json.data.steps;
   } catch (e) {
     console.warn(`Caught error getting steps: '${e}'`);
     return null;
@@ -80,15 +75,45 @@ export async function getConsoleTextOffset(
   startByte: number,
 ): Promise<ConsoleLogData | null> {
   try {
-    let response = await fetch(
+    const response = await fetch(
       `consoleOutput?nodeId=${stepId}&startByte=${startByte}`,
     );
     if (!response.ok) throw response.statusText;
-    let json = await response.json();
-    json.data.text = json.data.text;
+    const json = await response.json();
     return json.data;
   } catch (e) {
     console.error(`Caught error when fetching console: '${e}'`);
     return null;
+  }
+}
+
+export async function getConsoleBuildOutput(): Promise<string | null> {
+  try {
+    const response = await fetch(`consoleBuildOutput`);
+    if (!response.ok) throw response.statusText;
+    return await response.text();
+  } catch (e) {
+    console.error(`Caught error when fetching console: '${e}'`);
+    return null;
+  }
+}
+
+export async function getResourceBundle(
+  resource: string,
+): Promise<ResourceBundle | undefined> {
+  try {
+    const baseUrl: string = document.head.dataset.rooturl ?? "";
+    const response = await fetch(
+      `${baseUrl}/i18n/resourceBundle?baseName=${resource}`,
+    );
+    if (!response.ok) {
+      throw response.statusText;
+    }
+    return (await response.json()).data;
+  } catch (e) {
+    console.error(
+      `Caught error when fetching resource bundle ${resource}: '${e}'`,
+    );
+    return undefined;
   }
 }
