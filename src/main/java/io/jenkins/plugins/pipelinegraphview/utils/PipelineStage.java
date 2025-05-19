@@ -30,7 +30,10 @@ public class PipelineStage extends AbstractPipelineNode {
             boolean placeholder,
             TimingInfo timingInfo,
             String agent,
-            String runUrl) {
+            String runUrl,
+            long executorAssignedTime,
+            long executorWaitTime,
+            long executorEndTime) {
         super(id, name, state, type, title, timingInfo);
         this.children = children;
         this.seqContainerName = seqContainerName;
@@ -40,6 +43,10 @@ public class PipelineStage extends AbstractPipelineNode {
         this.placeholder = placeholder;
         this.agent = agent;
         this.url = "/" + runUrl + URL_NAME + "?selected-node=" + id;
+
+        setExecutorAssignedTime(executorAssignedTime);
+        setExecutorWaitTime(executorWaitTime);
+        setExecutorEndTime(executorEndTime);
     }
 
     public PipelineStage getNextSibling() {

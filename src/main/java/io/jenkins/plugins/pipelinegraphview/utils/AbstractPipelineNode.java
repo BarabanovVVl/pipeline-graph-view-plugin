@@ -11,12 +11,20 @@ public class AbstractPipelineNode {
     private long rawPauseDurationMillis;
     private long rawTotalDurationMillis;
     private long rawStartTimeMillis;
+    private long executorAssignedTime;
+    private long executorWaitTime;
+    private long executorEndTime;
     private String pauseDurationMillis;
     private String totalDurationMillis;
     private TimingInfo timingInfo;
 
     public AbstractPipelineNode(
-            String id, String name, PipelineState state, String type, String title, TimingInfo timingInfo) {
+            String id,
+            String name,
+            PipelineState state,
+            String type,
+            String title,
+            TimingInfo timingInfo) {
         this.id = id;
         this.name = name;
         this.state = state;
@@ -31,8 +39,18 @@ public class AbstractPipelineNode {
         this.totalDurationMillis = getUserFriendlyDuration(timingInfo.getTotalDurationMillis());
     }
 
-    public long getPauseDurationMillis() {
-        return pauseDurationMillis;
+    private String getUserFriendlyPauseDuration(long millis) {
+        if (millis < 1) {
+            return "";
+        }
+        return hudson.Util.getTimeSpanString(millis);
+    }
+
+    private String getUserFriendlyDuration(long millis) {
+        if (millis < 1) {
+            return "";
+        }
+        return hudson.Util.getTimeSpanString(millis);
     }
 
     public long getStartTimeMillis() {
@@ -42,6 +60,30 @@ public class AbstractPipelineNode {
     public long getRawStartTimeMillis() {
         // Dynamically generate as it depends of the current time.
         return rawStartTimeMillis;
+    }
+
+    public long getExecutorAssignedTime() {
+        return executorAssignedTime;
+    }
+
+    public void setExecutorAssignedTime(long executorAssignedTime) {
+        this.executorAssignedTime = executorAssignedTime;
+    }
+
+    public long getExecutorWaitTime() {
+        return executorWaitTime;
+    }
+
+    public void setExecutorWaitTime(long executorWaitTime) {
+        this.executorWaitTime = executorWaitTime;
+    }
+
+    public long getExecutorEndTime() {
+        return executorEndTime;
+    }
+
+    public void setExecutorEndTime(long executorEndTime) {
+        this.executorEndTime = executorEndTime;
     }
 
     public long getRawPauseDurationMillis() {

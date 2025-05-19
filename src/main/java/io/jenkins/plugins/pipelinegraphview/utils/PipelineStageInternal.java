@@ -19,6 +19,9 @@ class PipelineStageInternal {
     private boolean synthetic;
     private TimingInfo timingInfo;
     private String agent;
+    private long executorAssignedTime;
+    private long executorWaitTime;
+    private long executorEndTime;
 
     public PipelineStageInternal(
             String id,
@@ -29,7 +32,10 @@ class PipelineStageInternal {
             String title,
             boolean synthetic,
             TimingInfo times,
-            String agent) {
+            String agent,
+            long executorAssignedTime,
+            long executorWaitTime,
+            long executorEndTime) {
         this.id = id;
         this.name = name;
         this.parents = parents;
@@ -39,6 +45,34 @@ class PipelineStageInternal {
         this.synthetic = synthetic;
         this.timingInfo = times;
         this.agent = agent;
+        this.executorAssignedTime = executorAssignedTime;
+        this.executorWaitTime = executorWaitTime;
+        this.executorEndTime = executorEndTime;
+    }
+
+    // Геттеры и сеттеры для новых полей
+    public long getExecutorAssignedTime() {
+        return executorAssignedTime;
+    }
+
+    public void setExecutorAssignedTime(long executorAssignedTime) {
+        this.executorAssignedTime = executorAssignedTime;
+    }
+
+    public long getExecutorWaitTime() {
+        return executorWaitTime;
+    }
+
+    public void setExecutorWaitTime(long executorWaitTime) {
+        this.executorWaitTime = executorWaitTime;
+    }
+
+    public long getExecutorEndTime() {
+        return executorEndTime;
+    }
+
+    public void setExecutorEndTime(long executorEndTime) {
+        this.executorEndTime = executorEndTime;
     }
 
     public boolean isSequential() {
@@ -128,6 +162,9 @@ class PipelineStageInternal {
                 synthetic && name.equals(Messages.FlowNodeWrapper_noStage()),
                 timingInfo,
                 agent,
-                runUrl);
+                runUrl,
+                executorAssignedTime,
+                executorWaitTime,
+                executorEndTime);
     }
 }

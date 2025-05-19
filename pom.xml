@@ -158,6 +158,14 @@
           <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
         </configuration>
       </plugin>
+      <plugin>
+          <groupId>com.github.eirslett</groupId>
+          <artifactId>frontend-maven-plugin</artifactId>
+          <version>1.15.1</version>
+          <configuration>
+              <skip>true</skip> <!-- Временно отключаем запуск npm -->
+          </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
